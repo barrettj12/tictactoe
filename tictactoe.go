@@ -154,11 +154,36 @@ func result(pos Position) Result {
 	return Draw
 }
 
-type Strategy map[Position]int
+type Strategy interface {
+	// Returns the index where this strategy would play
+	// given the provided position
+	Play(Position) (int, error)
+}
 
-// Play the given strategy s against a random strategy
-// s == X plays first
-func playRandom(s Strategy, print bool) Result {
+// Some example strategies
+type HardcodedStrategy map[Position]int
+
+func (h *HardcodedStrategy) Play(pos Position) (int, error) {
+	ind, ok := (*h)[pos]
+	if !ok {
+		return 0, fmt.Errorf("no play defined for pos %s", pos)
+	}
+	return ind, nil
+}
+
+type RandomStrategy struct{}
+
+func (r *RandomStrategy) Play(pos Position) (int, error) {
+	blanks := getBlanks(pos)
+	if len(blanks) <= 0 {
+		return 0, fmt.Errorf("board %s is full", pos)
+	}
+	return blanks[rand.Intn(len(blanks))], nil
+}
+
+// Play these two strategies against each other
+// s1 = X = first, s2 = O = second
+func play(s1, s2 Strategy, print bool) Result {
 	pos := StartPos
 
 	for {
@@ -170,39 +195,50 @@ func playRandom(s Strategy, print bool) Result {
 			return res
 		}
 
+		var player Strategy // whose turn to play
+		var mark Square     // X or O
 		switch turn {
 		case 0, 2, 4, 6, 8:
-			// X's (s's) turn
-			// Get next index to play
-			ind := s[pos]
-			if pos[ind] != Empty {
-				panic(fmt.Sprintf("index %v in pos %v is already filled", ind, pos))
-			}
-			pos[ind] = SqX
+			player = s1
+			mark = SqX
 		case 1, 3, 5, 7:
-			// O's (random) turn
-			blanks := getBlanks(pos)
-			ind := blanks[rand.Intn(len(blanks))]
-			pos[ind] = SqO
+			player = s2
+			mark = SqO
 		default:
 			panic(fmt.Sprintf("turn %d not valid", turn))
 		}
+
+		ind, err := player.Play(pos)
+		if err != nil {
+			panic(err)
+		}
+		if pos[ind] != Empty {
+			panic(fmt.Sprintf("index %v in pos %s is already filled", ind, pos))
+		}
+		pos[ind] = mark
 
 		if print {
 			fmt.Printf("\nTurn %d:\n", turn+1)
 			printPos(pos)
 		}
 	}
+
+}
+
+// Play the given strategy s against a random strategy
+// s = X plays first
+func playRandom(s Strategy, print bool) Result {
+	return play(s, &RandomStrategy{}, print)
 }
 
 // generate random strategy
-func genRandStrat(allPositions []Position) Strategy {
-	st := make(Strategy, len(allPositions))
+func genRandStrat(allPositions []Position) *HardcodedStrategy {
+	st := make(HardcodedStrategy, len(allPositions))
 
 	for _, pos := range allPositions {
 		blanks := getBlanks(pos)
 		st[pos] = blanks[rand.Intn(len(blanks))]
 	}
 
-	return st
+	return &st
 }

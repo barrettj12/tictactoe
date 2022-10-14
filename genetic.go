@@ -46,10 +46,10 @@ func test(st Strategy) int {
 }
 
 // Given a "generation" of strategies, determine a next generation
-func nextGen(gen []Strategy) []Strategy {
+func nextGen(gen []HardcodedStrategy) []HardcodedStrategy {
 	// Whittle down generation
 	survivors := choose(gen)
-	nextGenr := make([]Strategy, 0, GENERATION_SIZE)
+	nextGenr := make([]HardcodedStrategy, 0, GENERATION_SIZE)
 	// All survivors to next generation
 	for _, st := range survivors {
 		nextGenr = append(nextGenr, st)
@@ -59,7 +59,7 @@ func nextGen(gen []Strategy) []Strategy {
 	for _, s1 := range survivors {
 		for _, s2 := range survivors {
 			// Create random mix of s1 and s2
-			child := make(Strategy, len(s1))
+			child := make(HardcodedStrategy, len(s1))
 			for pos := range s1 {
 				if rand.Float64() < MUTATION_RATE {
 					// Mutate this gene - pick random
@@ -80,11 +80,11 @@ func nextGen(gen []Strategy) []Strategy {
 }
 
 // Choose survivors from generation
-func choose(gen []Strategy) []Strategy {
+func choose(gen []HardcodedStrategy) []HardcodedStrategy {
 	scores := make([]int, len(gen))
 
 	for i, st := range gen {
-		scores[i] = test(st)
+		scores[i] = test(&st)
 	}
 	sort.Slice(gen, func(i, j int) bool { return scores[i] > scores[j] })
 
@@ -100,11 +100,11 @@ func evolve() {
 	allPos := getAllPositions()
 
 	// Initialise first gen randomly
-	gen := make([]Strategy, 0, GENERATION_SIZE)
+	gen := make([]HardcodedStrategy, 0, GENERATION_SIZE)
 	fmt.Println("Creating first gen...")
 	for k := 0; k < GENERATION_SIZE; k++ {
 		st := genRandStrat(allPos)
-		gen = append(gen, st)
+		gen = append(gen, *st)
 		fmt.Printf("\r   \r%d", k)
 	}
 	fmt.Println("\r   \rDone :)")
