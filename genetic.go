@@ -51,9 +51,7 @@ func nextGen(gen []HardcodedStrategy) []HardcodedStrategy {
 	survivors := choose(gen)
 	nextGenr := make([]HardcodedStrategy, 0, GENERATION_SIZE)
 	// All survivors to next generation
-	for _, st := range survivors {
-		nextGenr = append(nextGenr, st)
-	}
+	nextGenr = append(nextGenr, survivors...)
 
 	// Create children of each pair
 	for _, s1 := range survivors {

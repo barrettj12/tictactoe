@@ -22,6 +22,10 @@ var StartPos Position = [9]Square{
 	Empty, Empty, Empty,
 }
 
+func (p Position) String() string {
+	return string(p[:])
+}
+
 // Position needs to implement encoding.TextMarshaler
 func (p Position) MarshalText() (text []byte, err error) {
 	str := []byte{}
@@ -157,7 +161,7 @@ func result(pos Position) Result {
 		}
 	}
 
-	if len(getBlanks(pos)) == 0 {
+	if countTurn(pos) == 9 {
 		return Draw
 	} else {
 		return StillInPlay
@@ -176,7 +180,7 @@ type HardcodedStrategy map[Position]int
 func (h *HardcodedStrategy) Play(pos Position) (int, error) {
 	ind, ok := (*h)[pos]
 	if !ok {
-		return 0, fmt.Errorf("no play defined for pos %s", pos)
+		return 0, fmt.Errorf("no play defined for pos %q", pos)
 	}
 	return ind, nil
 }
@@ -186,7 +190,7 @@ type RandomStrategy struct{}
 func (r *RandomStrategy) Play(pos Position) (int, error) {
 	blanks := getBlanks(pos)
 	if len(blanks) <= 0 {
-		return 0, fmt.Errorf("board %s is full", pos)
+		return 0, fmt.Errorf("board %q is full", pos)
 	}
 	return blanks[rand.Intn(len(blanks))], nil
 }
@@ -223,7 +227,7 @@ func play(s1, s2 Strategy, print bool) Result {
 			panic(err)
 		}
 		if pos[ind] != Empty {
-			panic(fmt.Sprintf("index %v in pos %s is already filled", ind, pos))
+			panic(fmt.Sprintf("index %v in pos %q is already filled", ind, pos))
 		}
 		pos[ind] = mark
 
