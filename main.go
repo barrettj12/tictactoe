@@ -5,12 +5,31 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"strings"
 	"time"
+
+	"golang.org/x/exp/maps"
 )
+
+var cmds = map[string]func(){
+	"simple": simpleTest,
+	"evolve": evolve,
+	"test":   TestGeneratePositions,
+}
 
 func main() {
 	rand.Seed(time.Now().UnixNano())
-	evolve()
+	if len(os.Args) == 0 {
+		fmt.Println("please provide first arg:", strings.Join(maps.Keys(cmds), ", "))
+		os.Exit(1)
+	}
+	fn, ok := cmds[os.Args[1]]
+	if ok {
+		fn()
+	} else {
+		fmt.Println("command must be one of", strings.Join(maps.Keys(cmds), ", "))
+		os.Exit(1)
+	}
 }
 
 func simpleTest() {

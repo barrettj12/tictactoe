@@ -86,6 +86,9 @@ func getAllPositions() []Position {
 	allPos := []Position{StartPos}
 	seen := 0
 
+	seenPos := Set[Position]{}
+	seenPos.Add(StartPos)
+
 	for turn := 0; turn < 8; turn++ {
 		start := seen
 		seen = len(allPos)
@@ -109,9 +112,11 @@ func getAllPositions() []Position {
 			for _, i := range blanks {
 				newPos := pos
 				newPos[i] = mark
-				allPos = append(allPos, newPos)
+				if !seenPos.Contains(newPos) && result(pos) == StillInPlay {
+					allPos = append(allPos, newPos)
+					seenPos.Add(newPos)
+				}
 			}
-
 		}
 	}
 
@@ -121,9 +126,10 @@ func getAllPositions() []Position {
 type Result string
 
 const (
-	Draw Result = "draw"
-	XWon Result = "X won"
-	OWon Result = "O won"
+	StillInPlay Result = "still in play"
+	XWon        Result = "X won"
+	OWon        Result = "O won"
+	Draw        Result = "draw"
 )
 
 // Return result for a given board
@@ -151,7 +157,11 @@ func result(pos Position) Result {
 		}
 	}
 
-	return Draw
+	if len(getBlanks(pos)) == 0 {
+		return Draw
+	} else {
+		return StillInPlay
+	}
 }
 
 type Strategy interface {
@@ -191,7 +201,7 @@ func play(s1, s2 Strategy, print bool) Result {
 
 		// Check if there's a winner
 		res := result(pos)
-		if res == XWon || res == OWon || turn == 9 {
+		if res != StillInPlay {
 			return res
 		}
 
@@ -241,4 +251,16 @@ func genRandStrat(allPositions []Position) *HardcodedStrategy {
 	}
 
 	return &st
+}
+
+// Set type
+type Set[T comparable] map[T]struct{}
+
+func (s *Set[T]) Add(t T) {
+	(*s)[t] = struct{}{}
+}
+
+func (s *Set[T]) Contains(t T) bool {
+	_, ok := (*s)[t]
+	return ok
 }
